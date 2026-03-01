@@ -19,7 +19,6 @@ Personalized Digital Invitations, shown as a premium, custom designed, animated 
 - For the animations using **Framer Motion**.
 
 
-
 ## About the project
 Developed for the **HCTG NYC Hackaton**.<br>
 **Vows** is a testament to the power of modern web technologies to solve an old logistical problem. No AI bloat just pure, intentional engineering.
