@@ -15,9 +15,32 @@ model User {
   image         String?
   createdAt     DateTime
   updatedAt     DateTime
+  onboardingComplete Boolean @default(false)
 
   sessions Session[]
   accounts Account[]
+  weddingProfile WeddingProfile?
+}
+
+model WeddingProfile {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  partner1First String
+  partner1Last String
+  partner2First String
+  partner2Last String
+  weddingDate String?
+  notSureYet Boolean @default(false)
+  venueName String?
+  venueCity String?
+  venueState String?
+  guestCount String?
+  budgetRange String?
+  vibes String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Session {

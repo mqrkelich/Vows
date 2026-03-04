@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button"
 import { ProgressBar } from "./progress-bar"
 import { StepComplete } from "./step-complete"
 import { StepWelcome } from "./step-welcome"
-import { ArrowLeft, ArrowRight } from "lucide-react"
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react"
 import { StepCouple } from "./step-couple"
 import { StepDate } from "./step-date"
 import { StepVenue } from "./step-venue"
 import { StepGuestsBudget } from "./step-guests-budget"
 import { StepVibe } from "./step-vibe"
+import { saveOnboarding } from "../../_actions/save-onboarding"
 
 interface FormData {
     partner1First: string;
@@ -49,6 +50,8 @@ export function OnboardingWizard() {
     const [formData, setFormData] = useState<FormData>(INITIAL_DATA);
     const [direction, setDirection] = useState<"forward" | "backward">("forward");
     const [isAnimating, setIsAnimating] = useState(false);
+    const [isSaving, setIsSaving] = useState(false)
+    const [saveError, setSaveError] = useState<string | null>(null);
 
     const setField = useCallback(
         (key: string, value: string | boolean | string[]) => {
@@ -77,14 +80,33 @@ export function OnboardingWizard() {
         }, 200)
     }
 
-    const nextStep = () => {
+    const nextStep = async () => {
         if(!canProceed()) return;
         if(currentStep < TOTAL_CONTENT_STEPS) {
             animateTransition(currentStep + 1, "forward");
         }
 
-        if(currentStep === TOTAL_CONTENT_STEPS) {
-            /* ZAVRSIO ONBOARDING - SAD FETCHAJ SERVER I SACUVAJ SVE PODATKE */
+        if(currentStep === TOTAL_CONTENT_STEPS-1) {
+            setIsSaving(true)
+            setSaveError(null)
+
+            try {
+                const result = await saveOnboarding(formData)
+                if(!result.success) { 
+                    setSaveError(result.error || "Something went wrong.")
+                    setIsSaving(false)
+                    return;
+                }
+                animateTransition(currentStep + 1, "forward")
+
+            } catch {
+                setSaveError("Something went wrong. Please try again. ")
+            } finally {
+                setIsSaving(false);
+            }
+
+            return;
+            
         }
     }
 
@@ -159,11 +181,6 @@ export function OnboardingWizard() {
                             <StepVibe selectedVibes={formData.vibes} onChange={setField} />
                         }
                         {currentStep === 6 && <StepComplete data={formData} />}
-
-
-
-
-
                     </div>
                 </div>
 
@@ -172,6 +189,7 @@ export function OnboardingWizard() {
                         <Button
                             variant="ghost"
                             onClick={prevStep}
+                            disabled={isSaving}
                             className="text-muted-foreground hover:text-foreground"
                         >
                             <ArrowLeft className="w-4 h-4 mr-1" />
@@ -180,11 +198,21 @@ export function OnboardingWizard() {
 
                         <Button
                             onClick={nextStep}
-                            disabled={!canProceed()}
+                            disabled={!canProceed() || isSaving}
                             className="rounded-full px-8"
                         >
-                            {currentStep === TOTAL_CONTENT_STEPS - 1 ? "Finish" : "Continue"}
-                            <ArrowRight className="w-4 h-4 ml-1" />
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    {currentStep === TOTAL_CONTENT_STEPS - 1 ? "Finish" : "Continue"}
+                                    <ArrowRight className="w-4 h-4 ml-1" />
+                                </>
+                            )}
+                            
                         </Button>
                     </div>
                 )}

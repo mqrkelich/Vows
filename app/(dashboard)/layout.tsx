@@ -1,10 +1,32 @@
+import { auth } from "@/lib/auth";
 import { DashboardSidebar } from "./_components/dashboard-sidebar";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 
-export default function DashboradLayout({
+export default async function DashboradLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    })
+
+    if(!session?.user?.id) {
+        redirect('/login')
+    }
+
+    const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { onboardingComplete: true },
+    })
+
+    if(!user?.onboardingComplete) { 
+        redirect('/onboarding')
+    }
+
     return (
         <div className="flex min-h-screen bg-background">
             <DashboardSidebar />
